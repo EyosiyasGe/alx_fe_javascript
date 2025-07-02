@@ -34,7 +34,8 @@ if ( newq !=='' && catg !==""){
     }
 
 }
-btn.addEventListener('click', function() {
+function showRandomQuote () 
+{
 const back = localStorage.getItem('quote');
 if (!back) {
     console.log("No quotes found in localStorage.");
@@ -47,4 +48,7 @@ const randomidx =  Math.floor(Math.random() * dis.length);
 const randstring = dis[randomidx];
 
 qout.innerHTML = `"${randstring.text}" <br> <em>— ${randstring.category}</em>`;
-});
+
+}
+
+btn.addEventListener('click',showRandomQuote )

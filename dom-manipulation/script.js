@@ -14,7 +14,7 @@ const quotes = [
   { text: "You miss 100% of the shots you don’t take.", category: "Courage" }
 ];
 
-const addQuote = function () {
+const createAddQuoteForm = function () {
 const newq = document.getElementById('newQuoteText').value.trim();
 const catg = document.getElementById('newQuoteCategory').value.trim(); 
 

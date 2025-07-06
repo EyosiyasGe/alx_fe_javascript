@@ -1,55 +1,58 @@
-// Sample local quotes
-let quotes = [
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Mock API URL
+
+let quotes = JSON.parse(localStorage.getItem('quotes')) || [
   { text: "The only limit is your mind.", category: "Motivation" },
   { text: "Code is like humor. When you have to explain it, it’s bad.", category: "Programming" }
 ];
 
 // Save quotes to localStorage
 function saveQuotes() {
-  localStorage.setItem("quotes", JSON.stringify(quotes));
+  localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
 // Load quotes from localStorage
 function loadQuotes() {
-  const stored = localStorage.getItem("quotes");
+  const stored = localStorage.getItem('quotes');
   if (stored) quotes = JSON.parse(stored);
 }
 
-// Display random quote
+// Display a random quote
 function displayRandomQuote() {
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  document.getElementById("quoteText").textContent = quote.text;
-  document.getElementById("quoteCategory").textContent = quote.category;
+  if (quotes.length === 0) {
+    document.getElementById('quoteText').textContent = 'No quotes available.';
+    document.getElementById('quoteCategory').textContent = '';
+    return;
+  }
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
+  document.getElementById('quoteText').textContent = quote.text;
+  document.getElementById('quoteCategory').textContent = quote.category;
 }
 
-// Simulate server fetch (replace with real fetch in real app)
-function fetchFromServer() {
-  return new Promise((resolve) => {
-    // Simulate server-side quotes
-    const serverQuotes = [
-      { text: "Dream big. Work hard.", category: "Motivation" },
-      { text: "First, solve the problem. Then, write the code.", category: "Programming" }
-    ];
-    setTimeout(() => resolve(serverQuotes), 1000); // Simulate delay
-  });
+// Fetch quotes from server (simulate)
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const data = await response.json();
+    // Map to quote format, take first 10 for simulation
+    return data.slice(0, 10).map(item => ({
+      text: item.title,
+      category: 'general'
+    }));
+  } catch (error) {
+    console.error('Failed to fetch from server:', error);
+    return [];
+  }
 }
 
-// Simulate server post (replace with real POST in real app)
-function postToServer(newQuotes) {
-  return new Promise((resolve) => {
-    console.log("Posted to server:", newQuotes);
-    setTimeout(() => resolve({ status: "success" }), 1000);
-  });
-}
-
-// Sync with server
+// Sync local quotes with server quotes
 async function syncWithServer() {
-  const serverQuotes = await fetchFromServer();
-  let updated = false;
+  const serverQuotes = await fetchQuotesFromServer();
 
-  // Conflict resolution: Server always wins
-  for (let sq of serverQuotes) {
-    if (!quotes.some(lq => lq.text === sq.text && lq.category === sq.category)) {
+  let updated = false;
+  for (const sq of serverQuotes) {
+    const exists = quotes.some(lq => lq.text === sq.text && lq.category === sq.category);
+    if (!exists) {
       quotes.push(sq);
       updated = true;
     }
@@ -57,23 +60,41 @@ async function syncWithServer() {
 
   if (updated) {
     saveQuotes();
-    alert("Quotes updated from server.");
+    alert('Quotes updated from server.');
+    displayRandomQuote();
   }
 }
 
-// Periodically sync every 10 seconds
-setInterval(syncWithServer, 10000);
-
-// Manual add quote
+// Add a new quote locally and simulate posting to server
 function addQuote(text, category) {
+  if (!text || !category) {
+    alert('Please enter both quote and category.');
+    return;
+  }
+
   const newQuote = { text, category };
   quotes.push(newQuote);
   saveQuotes();
-  postToServer([newQuote]); // simulate pushing to server
+  alert('Quote added locally.');
+
+  // Simulate POST to server (not persisted in JSONPlaceholder)
+  fetch(SERVER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newQuote)
+  }).then(() => {
+    alert('Quote synced with server.');
+  }).catch(err => {
+    console.error('Failed to post quote:', err);
+  });
+
   displayRandomQuote();
 }
 
-// Load data on startup
+// Periodic sync every 15 seconds
+setInterval(syncWithServer, 15000);
+
+// On page load
 window.onload = () => {
   loadQuotes();
   displayRandomQuote();

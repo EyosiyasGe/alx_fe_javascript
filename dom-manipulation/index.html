@@ -16,6 +16,10 @@
 
 <input type="file" id="import" />
 <button id="download">Export Quotes</button>
+<select id="categoryFilter" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+    <!-- Dynamically populated categories -->
+  </select>
   </div>
     <script type="module" src="/dom-manipulation/script.js">
 

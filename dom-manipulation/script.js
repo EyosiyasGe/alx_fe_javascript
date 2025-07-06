@@ -1,64 +1,86 @@
-const qout = document.getElementById('quoteDisplay');
-const btn = document.getElementById('newQuote');
+// Get HTML elements
+const quoteDisplay = document.getElementById('quoteDisplay');
+const newQuoteBtn = document.getElementById('newQuote');
+const addQuoteBtn = document.getElementById('addQuote');
+const downloadBtn = document.getElementById('download');
+const importInput = document.getElementById('importFile');
 
-const quotes = [
+// Load quotes from localStorage or use defaults
+let quotes = JSON.parse(localStorage.getItem('quote')) || [
   { text: "The only way to do great work is to love what you do.", category: "Motivation" },
   { text: "In the middle of difficulty lies opportunity.", category: "Inspiration" },
-  { text: "Life is what happens when you're busy making other plans.", category: "Life" },
-  { text: "The best time to plant a tree was 20 years ago. The second best time is now.", category: "Wisdom" },
-  { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Perseverance" },
-  { text: "Happiness is not something ready made. It comes from your own actions.", category: "Happiness" },
-  { text: "Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.", category: "Mindfulness" },
-  { text: "It does not matter how slowly you go as long as you do not stop.", category: "Persistence" },
-  { text: "A person who never made a mistake never tried anything new.", category: "Creativity" },
-  { text: "You miss 100% of the shots you don’t take.", category: "Courage" }
+  { text: "Life is what happens when you're busy making other plans.", category: "Life" }
 ];
 
-const createAddQuoteForm = function () {
-const newq = document.getElementById('newQuoteText').value.trim();
-const catg = document.getElementById('newQuoteCategory').value.trim(); 
-
-
-if ( newq !=='' && catg !==""){
-    const sho = document.createElement('p');    
-    sho.textContent = `${catg} ${newq}`
-    qout.appendChild(sho);
-
-    quotes.push({ text: newq, category: catg });
-
-    const userjson = JSON.stringify(quotes);
-    localStorage.setItem('quote', userjson);
-
-    newq.value = '';
-    catg.value = '';
-    }
-
+// Save quotes to localStorage
+function saveQuotes() {
+  localStorage.setItem('quote', JSON.stringify(quotes));
 }
-function showRandomQuote () 
-{
-const back = localStorage.getItem('quote');
-if (!back) {
-    console.log("No quotes found in localStorage.");
+
+// Show a random quote
+function showRandomQuote() {
+  if (quotes.length === 0) {
+    quoteDisplay.innerHTML = 'No quotes available.';
     return;
-}
-const dis = JSON.parse(back);
-
-const randomidx =  Math.floor(Math.random() * dis.length);
-
-const randstring = dis[randomidx];
-
-qout.innerHTML = `"${randstring.text}" <br> <em>— ${randstring.category}</em>`;
-
-}
-
-btn.addEventListener('click',showRandomQuote )
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(event) {
-      const importedQuotes = JSON.parse(event.target.result);
-      quotes.push(...importedQuotes);
-      saveQuotes();
-      alert('Quotes imported successfully!');
-    };
-    fileReader.readAsText(event.target.files[0]);
   }
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
+  quoteDisplay.innerHTML = `"${quote.text}"<br><em>— ${quote.category}</em>`;
+}
+
+// Add new quote
+function addQuote() {
+  const textInput = document.getElementById('newQuoteText');
+  const categoryInput = document.getElementById('newQuoteCategory');
+  const text = textInput.value.trim();
+  const category = categoryInput.value.trim();
+
+  if (text && category) {
+    quotes.push({ text, category });
+    saveQuotes();
+    alert('Quote added successfully!');
+    textInput.value = '';
+    categoryInput.value = '';
+  } else {
+    alert('Please fill in both fields.');
+  }
+}
+
+// Download quotes as JSON
+function downloadQuotes() {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'quotes.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Import quotes from JSON file
+function importFromJsonFile(event) {
+  const fileReader = new FileReader();
+  fileReader.onload = function(e) {
+    try {
+      const importedQuotes = JSON.parse(e.target.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes.push(...importedQuotes);
+        saveQuotes();
+        alert('Quotes imported successfully!');
+      } else {
+        alert('Invalid file structure. Must be an array.');
+      }
+    } catch (err) {
+      alert('Error reading file. Make sure it is a valid JSON file.');
+    }
+  };
+  fileReader.readAsText(event.target.files[0]);
+}
+
+// Event listeners
+newQuoteBtn.addEventListener('click', showRandomQuote);
+addQuoteBtn.addEventListener('click', addQuote);
+downloadBtn.addEventListener('click', downloadQuotes);
+importInput.addEventListener('change', importFromJsonFile);
